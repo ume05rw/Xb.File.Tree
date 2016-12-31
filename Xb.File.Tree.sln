@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xb.File.Tree.STD1.3", "Xb.File.Tree.STD1.3\Xb.File.Tree.STD1.3.csproj", "{EB24CBB5-6235-4E38-95F5-71B59176ACF0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestXb", "TestXb\TestXb.csproj", "{ECBE3072-67F0-40B1-AF29-688556B79BA3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xb.Net.SmbTree.STD1.3", "Xb.Net.SmbTree.STD1.3\Xb.Net.SmbTree.STD1.3.csproj", "{49E9FC51-7438-471E-9F36-4513D8B9BEDD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EB24CBB5-6235-4E38-95F5-71B59176ACF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB24CBB5-6235-4E38-95F5-71B59176ACF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB24CBB5-6235-4E38-95F5-71B59176ACF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB24CBB5-6235-4E38-95F5-71B59176ACF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECBE3072-67F0-40B1-AF29-688556B79BA3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECBE3072-67F0-40B1-AF29-688556B79BA3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECBE3072-67F0-40B1-AF29-688556B79BA3}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECBE3072-67F0-40B1-AF29-688556B79BA3}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{49E9FC51-7438-471E-9F36-4513D8B9BEDD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49E9FC51-7438-471E-9F36-4513D8B9BEDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49E9FC51-7438-471E-9F36-4513D8B9BEDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49E9FC51-7438-471E-9F36-4513D8B9BEDD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
