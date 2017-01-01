@@ -41,6 +41,8 @@ namespace TestXb
             var tree = Xb.Net.SmbTree.GetTree("192.168.254.11"
                                             , "FreeArea/nonAuthDataTest");
             Assert.AreEqual(5, tree.Nodes.Length);
+
+            
         }
 
         [TestMethod()]

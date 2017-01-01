@@ -83,6 +83,7 @@ namespace Xb.File
         /// コンストラクタ
         /// </summary>
         /// <param name="readableStream"></param>
+        /// <param name="encoding"></param>
         protected ZipTree(Stream readableStream
                         , Encoding encoding = null)
         {
@@ -170,11 +171,6 @@ namespace Xb.File
                         var length = (path == fullPath)
                                             ? entry.Length
                                             : 0;
-
-                        if (elem == "file2.txt")
-                        {
-                            var a = 1;
-                        }
 
                         //parentPathが空文字であればRootNodeになる
                         //何かディレクトリ名があれば、前段階で既に生成済みのはず。

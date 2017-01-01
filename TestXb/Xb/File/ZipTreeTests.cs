@@ -419,6 +419,26 @@ namespace TextXb
 
             tree.Dispose();
             stream.Dispose();
+
+            var encoding = System.Text.Encoding.GetEncoding("Shift_JIS");
+            bytes = encoding.GetBytes("あいうえお");
+
+            var smbTree = Xb.Net.SmbTree.GetTree("192.168.254.11"
+                                               , "FreeArea/nonAuthDataTest");
+            var zipStream = smbTree["tugeneko - 彼とカレット。 01.zip"].GetReadStream();
+
+            tree = await Xb.File.ZipTree.GetTreeAsync(zipStream, encoding);
+            foreach (var node in tree.Nodes)
+            {
+                this.Out($"Name: {node.Name}");
+            }
+
+
+            tree = await Xb.File.ZipTree.GetTreeAsync(zipStream, Encoding.UTF8);
+            foreach (var node in tree.Nodes)
+            {
+                this.Out($"Name: {node.Name}");
+            }
         }
 
         [TestMethod()]
