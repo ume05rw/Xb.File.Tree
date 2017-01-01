@@ -36,10 +36,18 @@ namespace TestXb
         }
 
         [TestMethod()]
+        public void NoAuthtest()
+        {
+            var tree = Xb.Net.SmbTree.GetTree("192.168.254.11"
+                                            , "FreeArea/nonAuthDataTest");
+            Assert.AreEqual(5, tree.Nodes.Length);
+        }
+
+        [TestMethod()]
         public void Createtest()
         {
             var tree = this.GetTree("Apps/tmp");
-
+            
             var text = Xb.Type.Json.Stringify(tree.RootNode.GetSerializable(), true);
             this.Out(text);
         }

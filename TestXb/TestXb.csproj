@@ -143,6 +143,13 @@
     <Compile Include="Xb\Net\SmbTreeTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+    <None Include="TreeTextOrder.orderedtest">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Xb.File.Tree.STD1.3\Xb.File.Tree.STD1.3.csproj">
       <Project>{eb24cbb5-6235-4e38-95f5-71b59176acf0}</Project>
       <Name>Xb.File.Tree.STD1.3</Name>
@@ -151,13 +158,6 @@
       <Project>{49e9fc51-7438-471e-9f36-4513d8b9bedd}</Project>
       <Name>Xb.Net.SmbTree.STD1.3</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
-    <None Include="TreeTextOrder.orderedtest">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

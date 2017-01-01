@@ -84,7 +84,7 @@ namespace Xb.File
         /// </summary>
         /// <param name="readableStream"></param>
         protected ZipTree(Stream readableStream
-            , Encoding encoding = null)
+                        , Encoding encoding = null)
         {
             this.Encoding = encoding ?? Encoding.UTF8;
             this.ReadOnly = true;
