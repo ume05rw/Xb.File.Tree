@@ -23,6 +23,14 @@ namespace Xb.File.Tree
         Xb.File.Tree.INode this[string name] { get; }
 
         /// <summary>
+        /// Node indexer
+        /// ノード要素インデクサ
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        Xb.File.Tree.INode this[int index] { get; }
+
+        /// <summary>
         /// Node-path array of all nodes
         /// ノードパス配列
         /// </summary>

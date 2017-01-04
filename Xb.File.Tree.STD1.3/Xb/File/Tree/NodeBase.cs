@@ -78,6 +78,14 @@ namespace Xb.File.Tree
         }
 
         /// <summary>
+        /// Node indexer
+        /// ノード要素インデクサ
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public virtual Xb.File.Tree.INode this[int index] => this.Tree.GetNode(this.ChildPaths[index]);
+
+        /// <summary>
         /// Parent-Node full-path
         /// 親ノードのフルパス
         /// </summary>

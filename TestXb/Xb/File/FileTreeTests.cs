@@ -188,6 +188,46 @@ namespace TextXb
             Assert.AreEqual(tree.GetNode(structure.Elements["subdir1"]), tree.RootNode["dir1"]["subdir1"]);
             Assert.AreEqual(tree.GetNode(structure.Elements["file2.txt"]), tree.RootNode["dir1"]["file2.txt"]);
 
+
+            tree = Task.Run(() => Xb.File.FileTree.GetTreeRecursiveAsync(baseDir)).GetAwaiter().GetResult();
+            Assert.AreEqual(tree.GetNode(structure.Elements["dir1"]), tree["dir1"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["subdir1"]), tree["dir1"]["subdir1"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["subFile1.txt"]), tree["dir1"]["subdir1"]["subFile1.txt"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["subFile2.txt"]), tree["dir1"]["subdir1"]["subFile2.txt"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["file2.txt"]), tree["dir1"]["file2.txt"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["dir2"]), tree["dir2"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["dir2"]), tree["dir2"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["マルチバイト∀"]), tree["dir2"]["マルチバイト∀"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["マルチバイトΠ.txt"]), tree["dir2"]["マルチバイト∀"]["マルチバイトΠ.txt"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["マルチバイトЙ"]), tree["マルチバイトЙ"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["dirNoData"]), tree["dirNoData"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["file1.txt"]), tree["file1.txt"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["file3.txt"]), tree["file3.txt"]);
+            Assert.AreEqual(tree.GetNode(structure.Elements["マルチバイトΩ.txt"]), tree["マルチバイトΩ.txt"]);
+            
+            Assert.IsTrue(tree.RootNode.Children.Contains(tree[0]));
+            Assert.IsTrue(tree.RootNode.Children.Contains(tree[1]));
+            Assert.IsTrue(tree.RootNode.Children.Contains(tree[2]));
+            Assert.IsTrue(tree.RootNode.Children.Contains(tree[3]));
+            Assert.IsTrue(tree.RootNode.Children.Contains(tree[4]));
+            Assert.IsTrue(tree.RootNode.Children.Contains(tree[5]));
+            Assert.IsTrue(tree.RootNode.Children.Contains(tree[6]));
+
+            Assert.AreNotEqual(tree[0], tree[1]);
+            Assert.AreNotEqual(tree[0], tree[2]);
+            Assert.AreNotEqual(tree[0], tree[3]);
+            Assert.AreNotEqual(tree[0], tree[4]);
+            Assert.AreNotEqual(tree[0], tree[5]);
+            Assert.AreNotEqual(tree[0], tree[6]);
+
+            Assert.IsTrue(tree["dir1"].Children.Contains(tree["dir1"][0]));
+            Assert.IsTrue(tree["dir1"].Children.Contains(tree["dir1"][1]));
+            Assert.AreNotEqual(tree["dir1"][0], tree["dir1"][1]);
+
+            Assert.IsTrue(tree["dir1"]["subdir1"].Children.Contains(tree["dir1"]["subdir1"][0]));
+            Assert.IsTrue(tree["dir1"]["subdir1"].Children.Contains(tree["dir1"]["subdir1"][1]));
+            Assert.AreNotEqual(tree["dir1"]["subdir1"][0], tree["dir1"]["subdir1"][1]);
+
         }
 
         [TestMethod()]

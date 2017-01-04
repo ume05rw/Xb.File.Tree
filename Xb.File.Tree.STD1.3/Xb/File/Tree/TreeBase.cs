@@ -32,6 +32,15 @@ namespace Xb.File.Tree
 
 
         /// <summary>
+        /// Node indexer
+        /// ノード要素インデクサ
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public Xb.File.Tree.INode this[int index] => this.RootNode[index];
+
+
+        /// <summary>
         /// Node-path array of all nodes
         /// ノードパス配列
         /// </summary>
