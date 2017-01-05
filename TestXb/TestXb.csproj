@@ -108,8 +108,8 @@
       <HintPath>..\packages\Xb.1.0.5\lib\netstandard1.3\Xb.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Xb.Core, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Xb.Core.1.0.8\lib\net45\Xb.Core.dll</HintPath>
+    <Reference Include="Xb.Core, Version=1.0.9.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Xb.Core.1.0.9\lib\net45\Xb.Core.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Xb.Core.Json, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">

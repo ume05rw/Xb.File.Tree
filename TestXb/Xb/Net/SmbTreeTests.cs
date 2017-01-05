@@ -824,5 +824,26 @@ namespace TestXb
             zip.Dispose();
 
         }
+
+        [TestMethod()]
+        public async Task TreeGetSharesAsyncTest()
+        {
+            var shares = await Xb.Net.SmbTree.GetSharesAsync(this._server);
+            this.Out(Xb.Type.Json.Stringify(shares, true));
+        }
+
+        [TestMethod()]
+        public async Task TreeGetSharesAsyncTest2()
+        {
+            var shares = await Xb.Net.SmbTree.GetSharesAsync(2);
+            this.Out(Xb.Type.Json.Stringify(shares, true));
+        }
+
+        [TestMethod()]
+        public async Task TreeGetServersAsyncTest()
+        {
+            var shares = await Xb.Net.SmbTree.GetServersAsync(2);
+            this.Out(Xb.Type.Json.Stringify(shares, true));
+        }
     }
 }
