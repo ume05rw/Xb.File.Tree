@@ -28,10 +28,10 @@ namespace Xb.Net
         /// <param name="password"></param>
         /// <param name="domain"></param>
         protected SmbTree(string serverName
-            , string path
-            , string userName = null
-            , string password = null
-            , string domain = null)
+                        , string path
+                        , string userName = null
+                        , string password = null
+                        , string domain = null)
         {
             this.ServerName = serverName;
             this.UserName = userName ?? "";
@@ -205,9 +205,9 @@ namespace Xb.Net
         /// Get server & shared-folders on lan
         /// </summary>
         /// <returns></returns>
-        public static async Task<Share[]> GetSharesAsync(int scanTimeoutSec = 5)
+        public static async Task<Share[]> GetSharesAsync()
         {
-            var servers = await Xb.Net.SmbTree.GetServersAsync(scanTimeoutSec);
+            var servers = await Xb.Net.SmbTree.GetServersAsync();
 
             return await Task.Run(() =>
             {
@@ -220,17 +220,19 @@ namespace Xb.Net
                         try
                         {
                             var shares = smb.ListFiles()
-                                            .Select(node => node.GetName())
-                                            .Select(name => name.EndsWith("/") ? name.Substring(0, name.Length - 1) : name)
-                                            .Where(name => name != "IPC$")
-                                            .ToArray();
+                                .Select(node => node.GetName())
+                                .Select(name => name.EndsWith("/") ? name.Substring(0, name.Length - 1) : name)
+                                .Where(name => name != "IPC$")
+                                .ToArray();
                             foreach (var share in shares)
                                 result.Add(new Share(server, share));
                         }
-                        catch (Exception){}
+                        catch (Exception)
+                        {
+                        }
                     }
                 }
-                
+
                 return result.ToArray();
             });
         }
@@ -240,7 +242,7 @@ namespace Xb.Net
         /// Get smb-servers on lan
         /// </summary>
         /// <returns></returns>
-        public static async Task<string[]> GetServersAsync(int scanTimeoutSec = 5)
+        public static async Task<string[]> GetServersAsync()
         {
             return await Task.Run(() =>
             {
@@ -252,7 +254,7 @@ namespace Xb.Net
                                     .ToArray();
 
                 if (addresses.Length <= 0)
-                    return new string[] { };
+                    return new string[] {};
 
                 var tryAddress = new Dictionary<IPEndPoint, IPAddress>();
                 var resultCount = 0;
@@ -266,13 +268,14 @@ namespace Xb.Net
                     //24bitマスクとしてスキャンする。
                     for (var i = 1; i < 255; i++)
                     {
-                        addrBytes[3] = (byte)i;
-                        var ipv4String = string.Join(".", addrBytes.Select(b => ((int)b).ToString()));
-
+                        addrBytes[3] = (byte) i;
 
                         var addr = new IPAddress(addrBytes);
                         var endPoint = new System.Net.IPEndPoint(addr, 445);
                         tryAddress.Add(endPoint, addr);
+
+                        var connected = false;
+
                         var ev = new SocketAsyncEventArgs
                         {
                             RemoteEndPoint = new System.Net.IPEndPoint(addr, 445)
@@ -281,28 +284,32 @@ namespace Xb.Net
                         {
                             resultCount++;
 
+                            connected = true;
+
                             if (e.SocketError == SocketError.Success)
                                 existAddrs.Add(tryAddress[(IPEndPoint)e.RemoteEndPoint]);
-
-                            ((Socket)sender).Dispose();
                         };
 
                         var soc = new Socket(addr.AddressFamily
                                            , SocketType.Stream
                                            , ProtocolType.Tcp);
                         soc.ConnectAsync(ev);
+
+                        //非同期多重実行したかったが、iOSで`TooManyOpenFiles`エラー発生につき
+                        //一つ一つアドレスを検証することにする。
+                        //50ミリ秒以内に応答がないとき、次へ。
+                        var limitTime = DateTime.Now.AddMilliseconds(50);
+                        while (!connected)
+                        {
+                            if (limitTime < DateTime.Now)
+                                break;
+
+                            Thread.Sleep(50);
+                        }
+
+                        soc.Dispose();
                     }
                 }
-
-                var limitTime = DateTime.Now.AddSeconds(scanTimeoutSec);
-                while (resultCount < tryAddress.Count)
-                {
-                    if (limitTime < DateTime.Now)
-                        break;
-
-                    Thread.Sleep(200);
-                }
-
 
                 var result = new List<string>();
                 foreach (var addr in existAddrs)

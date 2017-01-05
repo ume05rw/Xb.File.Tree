@@ -835,14 +835,14 @@ namespace TestXb
         [TestMethod()]
         public async Task TreeGetSharesAsyncTest2()
         {
-            var shares = await Xb.Net.SmbTree.GetSharesAsync(2);
+            var shares = await Xb.Net.SmbTree.GetSharesAsync();
             this.Out(Xb.Type.Json.Stringify(shares, true));
         }
 
         [TestMethod()]
         public async Task TreeGetServersAsyncTest()
         {
-            var shares = await Xb.Net.SmbTree.GetServersAsync(2);
+            var shares = await Xb.Net.SmbTree.GetServersAsync();
             this.Out(Xb.Type.Json.Stringify(shares, true));
         }
     }
