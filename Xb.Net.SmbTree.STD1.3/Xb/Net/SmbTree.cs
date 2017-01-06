@@ -244,84 +244,171 @@ namespace Xb.Net
         /// <returns></returns>
         public static async Task<string[]> GetServersAsync()
         {
-            return await Task.Run(() =>
+            return await ServerScanner.GetServersAsync();
+        }
+
+        public class ServerScanner
+        {
+            public static async Task<string[]> GetServersAsync()
             {
-                //自身のIPv4アドレスを取得
-                var addresses = Task.Run(() => System.Net.Dns.GetHostAddressesAsync(System.Net.Dns.GetHostName()))
-                                    .GetAwaiter()
-                                    .GetResult()
-                                    .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
-                                    .ToArray();
+                var instance = new ServerScanner();
+                return await instance.Exec();
+            }
 
-                if (addresses.Length <= 0)
-                    return new string[] {};
+            public static int ParallelSocketCount { get; set; } = 20;
+            public static int NoResponseTimeoutMilliSecond { get; set; } = 200;
+            public static int StoreResponseTimeoutSecond { get; set; } = 40;
+            public static int WaitParOneScanMilliSecond { get; set; } = 100;
 
-                var tryAddress = new Dictionary<IPEndPoint, IPAddress>();
-                var resultCount = 0;
-                var existAddrs = new List<IPAddress>();
+            private List<IPAddress> _tryAddress;
+            private List<IPAddress> _existAddress;
+            private IPAddress[] _addresses;
+            private Socket[] _sockets;
 
-                foreach (var address in addresses)
+
+            private ServerScanner()
+            {
+            }
+
+            private async Task<string[]> Exec()
+            {
+                return await Task.Run(() =>
                 {
-                    var addrBytes = address.GetAddressBytes();
+                    this._addresses = Task.Run(() => System.Net.Dns.GetHostAddressesAsync(System.Net.Dns.GetHostName()))
+                                          .GetAwaiter()
+                                          .GetResult()
+                                          .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
+                                          .ToArray();
+                    
+                    if (this._addresses.Length <= 0)
+                        return new string[] { };
 
-                    //自身のv4アドレスは取得可能だが、マスクが取得できないため
-                    //24bitマスクとしてスキャンする。
-                    for (var i = 1; i < 255; i++)
+                    this._tryAddress = new List<IPAddress>();
+                    this._existAddress = new List<IPAddress>();
+                    this._sockets = new Socket[ParallelSocketCount];
+
+                    foreach (var address in this._addresses)
                     {
-                        addrBytes[3] = (byte) i;
+                        var addrBytes = address.GetAddressBytes();
 
-                        var addr = new IPAddress(addrBytes);
-                        var endPoint = new System.Net.IPEndPoint(addr, 445);
-                        tryAddress.Add(endPoint, addr);
-
-                        var connected = false;
-
-                        var ev = new SocketAsyncEventArgs
+                        //自身のv4アドレスは取得可能だが、マスクが取得できないため
+                        //24bitマスクとしてスキャンする。
+                        for (var i = 1; i < 255; i++)
                         {
-                            RemoteEndPoint = new System.Net.IPEndPoint(addr, 445)
-                        };
-                        ev.Completed += (sender, e) =>
+                            addrBytes[3] = (byte)i;
+
+                            //445ポートへの接続試行を実行する。
+                            //呼び出し先メソッド内の処理が全て別スレッドで動作するため、
+                            //スキャンが平行する。
+                            //配列をまるごと渡すと参照渡しになってしまうため、分割してbyte型を渡す。
+                            this.TryConnect(addrBytes[0], addrBytes[1], addrBytes[2], addrBytes[3]);
+
+                            //大量にスレッドを生成すると、イベントの割り込みが遅くなるらしい。
+                            Thread.Sleep(WaitParOneScanMilliSecond);
+                        }
+                    }
+
+                    var limitTime = DateTime.Now.AddSeconds(StoreResponseTimeoutSecond);
+                    while (this._tryAddress.Count < (this._addresses.Length * 253))
+                    {
+                        //Xb.Util.Out($"tryAddress.Count: {this._tryAddress.Count}");
+                        //Xb.Util.Out($"existAddrs.Count: {this._existAddrs.Count}");
+
+                        if (limitTime < DateTime.Now)
+                            break;
+
+                        Thread.Sleep(50);
+                    }
+
+
+                    var result = new List<string>();
+                    foreach (var addr in this._existAddress)
+                    {
+                        var server = string.Join(".", addr.GetAddressBytes().Select(b => ((int)b).ToString()));
+                        var smb = new SmbFile($"smb://{server}");
+                        if (smb.Exists())
+                            result.Add(server);
+                    }
+
+                    return result.ToArray();
+                });
+            }
+
+
+            //値渡しのため、バイト配列を分割して受け取る。
+            private void TryConnect(byte byte1, byte byte2, byte byte3, byte byte4)
+            {
+                Task.Run(() =>
+                {
+                    var index = (int)byte4;
+                    var socketIndex = index % this._sockets.Length;
+                    var addrBytes = new byte[] { byte1, byte2, byte3, byte4 };
+
+                    DateTime startTime = DateTime.MinValue;
+
+                    //別スレッドでソケット使用中のとき、時間を置いてリトライ
+                    if (this._sockets[socketIndex] != null)
+                    {
+                        //Xb.Util.Out($"TryConnect-Retry: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex}");
+                        Task.Run(() =>
                         {
-                            resultCount++;
+                            Thread.Sleep(NoResponseTimeoutMilliSecond + 50);
+                            //this.TryConnect(byte1, byte2, byte3, byte4);
+                        })
+                        .ContinueWith(t =>
+                        {
+                            this.TryConnect(byte1, byte2, byte3, byte4);
+                        });
+                        return;
+                    }
 
-                            connected = true;
+                    this._sockets[socketIndex] = new Socket((new IPAddress(addrBytes)).AddressFamily
+                                                          , SocketType.Stream
+                                                          , ProtocolType.Tcp);
 
-                            if (e.SocketError == SocketError.Success)
-                                existAddrs.Add(tryAddress[(IPEndPoint)e.RemoteEndPoint]);
-                        };
+                    //Xb.Util.Out($"TryConnect-Exec: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex}");
 
-                        var soc = new Socket(addr.AddressFamily
-                                           , SocketType.Stream
-                                           , ProtocolType.Tcp);
-                        soc.ConnectAsync(ev);
+                    var ipAddress = new IPAddress(addrBytes);
+                    this._tryAddress.Add(ipAddress);
 
-                        //非同期多重実行したかったが、iOSで`TooManyOpenFiles`エラー発生につき
-                        //一つ一つアドレスを検証することにする。
-                        //50ミリ秒以内に応答がないとき、次へ。
-                        var limitTime = DateTime.Now.AddMilliseconds(50);
+                    var connected = false;
+
+                    var ev = new SocketAsyncEventArgs
+                    {
+                        RemoteEndPoint = new System.Net.IPEndPoint(ipAddress, 445)
+                    };
+                    ev.Completed += (sender, e) =>
+                    {
+                        connected = true;
+                        if (e.SocketError == SocketError.Success)
+                        {
+                            Xb.Util.Out($"TryConnect-Found: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex} / {startTime.ToString("HH:mm:ss.fff")}");
+                            this._existAddress.Add(ipAddress);
+                        }
+                    };
+
+                    startTime = DateTime.Now;
+                    this._sockets[socketIndex].ConnectAsync(ev);
+
+                    Task.Run(() =>
+                    {
+                        //NoResponseTimeoutMilliSec(ミリ秒)以内に応答がないとき、存在しないアドレスとする。
+                        var limitTime = DateTime.Now.AddMilliseconds(NoResponseTimeoutMilliSecond);
                         while (!connected)
                         {
                             if (limitTime < DateTime.Now)
                                 break;
 
-                            Thread.Sleep(50);
+                            Thread.Sleep(NoResponseTimeoutMilliSecond / 10);
                         }
 
-                        soc.Dispose();
-                    }
-                }
-
-                var result = new List<string>();
-                foreach (var addr in existAddrs)
-                {
-                    var server = string.Join(".", addr.GetAddressBytes().Select(b => ((int)b).ToString()));
-                    var smb = new SmbFile($"smb://{server}");
-                    if (smb.Exists())
-                        result.Add(server);
-                }
-
-                return result.ToArray();
-            });
+                        this._sockets[socketIndex].Dispose();
+                        this._sockets[socketIndex] = null;
+                        //if (!connected) Xb.Util.Out($"TryConnect-Failed: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex} / {startTime.ToString("HH:mm:ss.fff")}");
+                        //Xb.Util.Out($"TryConnect-End: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex} / {(connected ? "Success" : "Fail") }");
+                    });
+                });
+            }
         }
     }
 }
