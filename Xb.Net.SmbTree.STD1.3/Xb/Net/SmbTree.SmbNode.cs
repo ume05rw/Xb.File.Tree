@@ -50,11 +50,11 @@ namespace Xb.Net
                     throw new ArgumentException($"Xb.File.TreeBase.Node.Constructor: tree null");
                 }
 
-                if (string.IsNullOrEmpty(path))
-                {
-                    Xb.Util.Out($"Xb.File.Tree.NodeBase.Constructor: path null");
-                    throw new ArgumentException($"Xb.File.TreeBase.Node.Constructor: path null");
-                }
+                //if (string.IsNullOrEmpty(path))
+                //{
+                //    Xb.Util.Out($"Xb.File.Tree.NodeBase.Constructor: path null");
+                //    throw new ArgumentException($"Xb.File.TreeBase.Node.Constructor: path null");
+                //}
 
                 this.SetPath(path);
                 this.Tree = tree;
