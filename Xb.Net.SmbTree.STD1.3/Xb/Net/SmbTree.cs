@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -141,10 +142,10 @@ namespace Xb.Net
             await Task.Run(() =>
             {
                 tree = Xb.Net.SmbTree.GetTree(serverName
-                    , path
-                    , userName
-                    , password
-                    , domain);
+                                            , path
+                                            , userName
+                                            , password
+                                            , domain);
             });
             await tree.ScanRecursiveAsync();
 
@@ -163,11 +164,14 @@ namespace Xb.Net
             {
                 try
                 {
-                    var shares = (new SmbFile($"smb://{serverAddress}")).ListFiles()
-                        .Select(node => node.GetName())
-                        .Select(name => name.EndsWith("/") ? name.Substring(0, name.Length - 1) : name)
-                        .Where(name => name != "IPC$")
-                        .ToArray();
+                    var shares = (new SmbFile($"smb://{serverAddress}"))
+                                        .ListFiles()
+                                        .Select(node => node.GetName())
+                                        .Select(name => name.EndsWith("/") 
+                                                            ? name.Substring(0, name.Length - 1) 
+                                                            : name)
+                                        .Where(name => name != "IPC$")
+                                        .ToArray();
                     var result = new List<Share>();
                     foreach (var share in shares)
                         result.Add(new Share(serverAddress, share));
@@ -220,10 +224,12 @@ namespace Xb.Net
                         try
                         {
                             var shares = smb.ListFiles()
-                                .Select(node => node.GetName())
-                                .Select(name => name.EndsWith("/") ? name.Substring(0, name.Length - 1) : name)
-                                .Where(name => name != "IPC$")
-                                .ToArray();
+                                            .Select(node => node.GetName())
+                                            .Select(name => name.EndsWith("/") 
+                                                                ? name.Substring(0, name.Length - 1) 
+                                                                : name)
+                                            .Where(name => name != "IPC$")
+                                            .ToArray();
                             foreach (var share in shares)
                                 result.Add(new Share(server, share));
                         }
@@ -247,11 +253,26 @@ namespace Xb.Net
             return await ServerScanner.GetServersAsync();
         }
 
+        /// <summary>
+        /// Get smb-servers on lan
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<string[]> GetServersAsync(IPAddress address)
+        {
+            return await ServerScanner.GetServersAsync(address);
+        }
+
         public class ServerScanner
         {
             public static async Task<string[]> GetServersAsync()
             {
                 var instance = new ServerScanner();
+                return await instance.Exec();
+            }
+
+            public static async Task<string[]> GetServersAsync(IPAddress address)
+            {
+                var instance = new ServerScanner(address);
                 return await instance.Exec();
             }
 
@@ -262,7 +283,7 @@ namespace Xb.Net
 
             private List<IPAddress> _tryAddress;
             private List<IPAddress> _existAddress;
-            private IPAddress[] _addresses;
+            private IPAddress[] _addresses = null;
             private Socket[] _sockets;
 
 
@@ -270,19 +291,32 @@ namespace Xb.Net
             {
             }
 
+            private ServerScanner(IPAddress address)
+            {
+                if (address == null
+                    || address.AddressFamily != AddressFamily.InterNetwork)
+                {
+                    throw new ArgumentOutOfRangeException("Xb.Net.SmbTree.ServerScanner: not target address");
+                }
+                this._addresses = new IPAddress[] { address }; 
+            }
+
             private async Task<string[]> Exec()
             {
                 return await Task.Run(() =>
                 {
-                    this._addresses = Task.Run(() => System.Net.Dns.GetHostAddressesAsync(System.Net.Dns.GetHostName()))
-                                          .GetAwaiter()
-                                          .GetResult()
-                                          .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
-                                          .ToArray();
+                    if (this._addresses == null)
+                    {
+                        this._addresses = Task.Run(() => System.Net.Dns.GetHostAddressesAsync(System.Net.Dns.GetHostName()))
+                                              .GetAwaiter()
+                                              .GetResult()
+                                              .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
+                                              .ToArray();
+                    }
                     
                     if (this._addresses.Length <= 0)
                         return new string[] { };
-
+                    
                     this._tryAddress = new List<IPAddress>();
                     this._existAddress = new List<IPAddress>();
                     this._sockets = new Socket[ParallelSocketCount];
