@@ -22,34 +22,34 @@ namespace TestXb
         private Xb.Net.SmbTree GetTree(string path)
         {
             return Xb.Net.SmbTree.GetTree(this._server
-                                            , path
-                                            , this._user
-                                            , this._password);
+                , path
+                , this._user
+                , this._password);
         }
 
         private async Task<Xb.Net.SmbTree> GetTreeRecursiveAsync(string path)
         {
             return await Xb.Net.SmbTree.GetTreeRecursiveAsync(this._server
-                                                                , path
-                                                                , this._user
-                                                                , this._password);
+                , path
+                , this._user
+                , this._password);
         }
 
         [TestMethod()]
         public void NoAuthtest()
         {
             var tree = Xb.Net.SmbTree.GetTree("192.168.254.11"
-                                            , "FreeArea/nonAuthDataTest");
+                , "FreeArea/nonAuthDataTest");
             Assert.AreEqual(5, tree.Nodes.Length);
 
-            
+
         }
 
         [TestMethod()]
         public void Createtest()
         {
             var tree = this.GetTree("Apps/tmp");
-            
+
             var text = Xb.Type.Json.Stringify(tree.RootNode.GetSerializable(), true);
             this.Out(text);
         }
@@ -58,7 +58,7 @@ namespace TestXb
         public async Task Create2test()
         {
             var tree = await this.GetTreeRecursiveAsync("Others/OtherBook");
-            
+
             var text = Xb.Type.Json.Stringify(tree.RootNode.GetSerializable(), true);
             this.Out(text);
         }
@@ -319,7 +319,7 @@ namespace TestXb
             Assert.AreEqual(tree.GetNode(newNodePath), dir1["file4.txt"]);
             Assert.AreEqual(11, tree.Paths.Length);
 
-            
+
 
 
             var newFileNode = dir1["file4.txt"];
@@ -334,7 +334,7 @@ namespace TestXb
 
 
             //フォルダを一つ生成
-            var newDirPath = "R:\\Tmp\\baseDir\\dir1\\subdirAdd";//System.IO.Path.Combine(dir1.FullPath, "subdirAdd");
+            var newDirPath = "R:\\Tmp\\baseDir\\dir1\\subdirAdd"; //System.IO.Path.Combine(dir1.FullPath, "subdirAdd");
             newNodePath = "Private/Tmp/baseDir/dir1/subdirAdd";
             Assert.IsFalse(tree.Paths.Contains(newNodePath));
 
@@ -348,7 +348,7 @@ namespace TestXb
             Assert.AreEqual(tree.GetNode(newNodePath), dir1["subdirAdd"]);
             Assert.AreEqual(12, tree.Paths.Length);
 
-            
+
 
             var newDirNode = dir1["subdirAdd"];
             Assert.AreEqual(tree, newDirNode.Tree);
@@ -359,7 +359,7 @@ namespace TestXb
             Assert.AreEqual("subdirAdd", newDirNode.Name);
             Assert.AreEqual(dir1, newDirNode.Parent);
             Assert.AreEqual(NodeBase.NodeType.Directory, newDirNode.Type);
-            
+
             Task.Run(() =>
             {
                 //リモート共有をマウントしていると、反映が遅い？
@@ -453,7 +453,7 @@ namespace TestXb
             Assert.IsFalse(Directory.Exists(baseDir));
 
             var structure = this.BuildDirectoryTree("R:\\Tmp");
-            
+
             var tree = await this.GetTreeRecursiveAsync("Private/Tmp/baseDir");
 
             var node = tree.RootNode;
@@ -644,18 +644,18 @@ namespace TestXb
             Assert.AreEqual(Xb.File.Tree.NodeBase.NodeType.Directory, subdir1.Type);
             Assert.AreEqual("subdir1", subdir1.Name);
             Assert.AreEqual("", subdir1.Extension);
-            
+
 
             nodes = subdir1.FindAll(".txt");
             Assert.AreEqual(2, nodes.Length);
 
             var node3 = subdir1.Find("xt");
-            Assert.IsTrue((new string[] { "subFile1.txt", "subFile2.txt" }).Contains(node3.Name));
+            Assert.IsTrue((new string[] {"subFile1.txt", "subFile2.txt"}).Contains(node3.Name));
 
             //get direct-child only
             tree = this.GetTree("Private/Tmp/baseDir");
 
-            
+
 
             nodes = tree.FindAll(".txt");
             results = new INode[]
@@ -764,7 +764,7 @@ namespace TestXb
             {
                 nodes = tree.GetNodes(new string[]
                 {
-                    
+
                     "Private/Tmp/baseDir"
                     , "Private/Tmp/baseDir/not_exists"
                     , "Private/Tmp/baseDir/dir2/マルチバイト∀/マルチバイトΠ.txt"
@@ -816,7 +816,7 @@ namespace TestXb
                 {
                     var resultBytes = node.GetBytes();
                 }
-                
+
                 this.Out(node.FullPath);
             }
 
@@ -844,6 +844,34 @@ namespace TestXb
         {
             var shares = await Xb.Net.SmbTree.GetServersAsync();
             this.Out(Xb.Type.Json.Stringify(shares, true));
+        }
+
+        [TestMethod()]
+        public async Task FileNameTest()
+        {
+            try
+            {
+                //var tree1 = Xb.Net.SmbTree.GetTree(
+                //    "192.168.254.11"
+                //    , "Others/Photo/ビビアン・スー - Angel.zip"
+                //    , "root"
+                //    , "igaHaraW");
+
+                var tree = Xb.Net.SmbTree.GetTree(
+                    "192.168.254.11"
+                    , "Others/Photo/風景#壁紙"
+                    , "root"
+                    , "igaHaraW");
+            }
+            catch (Exception ex)
+            {
+                this.Out(ex.Message);
+                throw;
+            }
+
+            var a = 1;
+
+            //this.Out(Xb.Type.Json.Stringify(shares, true));
         }
     }
 }

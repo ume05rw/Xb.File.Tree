@@ -85,7 +85,10 @@ namespace Xb.Net
             if (existPrefix)
                 prefix.Append("@");
 
-            return $"smb://{(existPrefix ? prefix.ToString() : "")}{this.ServerName}/{path}";
+            var result = $"smb://{(existPrefix ? prefix.ToString() : "")}{this.ServerName}/{path}";
+            result = Xb.Net.Http.EncodeUri(result);
+            result = result.Replace("#", "%23");
+            return result;
         }
 
         protected internal string GetNodePath(string path)
@@ -105,16 +108,16 @@ namespace Xb.Net
         /// <param name="domain"></param>
         /// <returns></returns>
         public static Xb.Net.SmbTree GetTree(string serverName
-            , string path
-            , string userName = null
-            , string password = null
-            , string domain = null)
+                                           , string path
+                                           , string userName = null
+                                           , string password = null
+                                           , string domain = null)
         {
             var result = new Xb.Net.SmbTree(serverName
-                , path
-                , userName
-                , password
-                , domain);
+                                          , path
+                                          , userName
+                                          , password
+                                          , domain);
             result.RootNode.Scan();
             return result;
         }

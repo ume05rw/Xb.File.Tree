@@ -56,13 +56,16 @@ namespace Xb.Net
                 //    throw new ArgumentException($"Xb.File.TreeBase.Node.Constructor: path null");
                 //}
 
-                this.SetPath(path);
                 this.Tree = tree;
+                this.SetPath(path);
                 this.ChildPaths = new List<string>();
 
 
                 if (!this.SmbFile.Exists())
+                {
                     Xb.Util.Out($"Xb.Net.SmbTree.SmbNode.Constructor: path not found [{path}]");
+                    throw new ArgumentException($"Xb.Net.SmbTree.SmbNode.Constructor: path not found [{path}]");
+                }
 
                 if (this.SmbFile.IsFile())
                 {
@@ -116,7 +119,36 @@ namespace Xb.Net
                     ? string.Join("/", elems.Take(idx))
                     : "";
 
-                this.FullPath = this.CombinePath(this.ParentPath, this.Name);
+                var fullPath = this.CombinePath(this.ParentPath, this.Name);
+                if (fullPath.IndexOf("%23", StringComparison.Ordinal) < 0)
+                {
+                    this.FullPath = fullPath;
+                    return;
+                }
+
+                //パスの中に「#」があったとき、エンコード後の「%23」がパスとして
+                //取得されてしまう。
+                //「%23」がエンコード後なのか実際のファイル／フォルダ名なのかを判定する。
+                //1)「%23」を「#」にデコードして存在チェック
+                var smbTree = (SmbTree) this.Tree;
+                var smbFile = new SmbFile(smbTree.GetUriString(fullPath.Replace("%23", "#")));
+
+                if (smbFile.Exists())
+                {
+                    this.Name = this.Name.Replace("%23", "#");
+                    this.ParentPath = this.ParentPath.Replace("%23", "#");
+                    this.FullPath = fullPath.Replace("%23", "#");
+                    return;
+                }
+
+                smbFile = new SmbFile(smbTree.GetUriString(fullPath));
+                if (smbFile.Exists())
+                {
+                    this.FullPath = fullPath;
+                    return;
+                }
+                
+                throw new IOException($"Xb.Net.SmbTree.SmbNode.SetPath: path not found [{fullPath}]");
             }
 
             protected virtual string CombinePath(params string[] paths)
@@ -159,8 +191,9 @@ namespace Xb.Net
                                       .ToDictionary(n => tree.GetNodePath(n.GetPath())
                                                   , n => n);
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
+                    Xb.Util.Out(ex);
                     Xb.Util.Out($"Xb.Net.SmbTree.FileNode.Scan: Scan failure, may be not permitted [{this.FullPath}]");
                     return;
                 }
