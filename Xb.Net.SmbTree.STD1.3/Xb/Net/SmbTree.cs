@@ -57,39 +57,54 @@ namespace Xb.Net
         /// <returns></returns>
         protected internal string GetUriString(string path)
         {
+            return SmbTree.GetUriString(this.ServerName
+                                      , path
+                                      , this.UserName
+                                      , this.Password
+                                      , this.Domain);
+        }
+
+
+        protected static string GetUriString(string serverName
+                                           , string path
+                                           , string userName = null
+                                           , string password = null
+                                           , string domain = null)
+        {
             var prefix = new StringBuilder();
             var existPrefix = false;
 
-            if (!string.IsNullOrEmpty(this.Domain))
+            if (!string.IsNullOrEmpty(domain))
             {
                 existPrefix = true;
-                prefix.Append(this.Domain);
-                if (!string.IsNullOrEmpty(this.UserName) || string.IsNullOrEmpty(this.Password))
+                prefix.Append(domain);
+                if (!string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
                     prefix.Append(";");
             }
 
-            if (!string.IsNullOrEmpty(this.UserName))
+            if (!string.IsNullOrEmpty(userName))
             {
                 existPrefix = true;
-                prefix.Append(this.UserName);
-                if (!string.IsNullOrEmpty(this.Password))
+                prefix.Append(userName);
+                if (!string.IsNullOrEmpty(password))
                     prefix.Append(":");
             }
 
-            if (!string.IsNullOrEmpty(this.Password))
+            if (!string.IsNullOrEmpty(password))
             {
                 existPrefix = true;
-                prefix.Append(this.Password);
+                prefix.Append(password);
             }
 
             if (existPrefix)
                 prefix.Append("@");
 
-            var result = $"smb://{(existPrefix ? prefix.ToString() : "")}{this.ServerName}/{path}";
+            var result = $"smb://{(existPrefix ? prefix.ToString() : "")}{serverName}/{path}";
             result = Xb.Net.Http.EncodeUri(result);
             result = result.Replace("#", "%23");
             return result;
         }
+
 
         protected internal string GetNodePath(string path)
         {
@@ -154,6 +169,34 @@ namespace Xb.Net
 
             return tree;
         }
+
+
+        public static async Task<bool> Exists(string serverName
+            , string path
+            , string userName = null
+            , string password = null
+            , string domain = null)
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    var uri = SmbTree.GetUriString(serverName
+                                                 , path
+                                                 , userName
+                                                 , password
+                                                 , domain);
+
+                    var smbFile = new SmbFile(uri);
+                    return smbFile.Exists();
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            });
+        }
+
 
 
         /// <summary>

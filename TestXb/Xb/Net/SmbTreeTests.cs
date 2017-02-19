@@ -851,11 +851,11 @@ namespace TestXb
         {
             try
             {
-                //var tree1 = Xb.Net.SmbTree.GetTree(
-                //    "192.168.254.11"
-                //    , "Others/Photo/ビビアン・スー - Angel.zip"
-                //    , "root"
-                //    , "igaHaraW");
+                var tree1 = Xb.Net.SmbTree.GetTree(
+                    "192.168.254.11"
+                    , "Others/Photo/ビビアン・スー - Angel.zip"
+                    , "root"
+                    , "igaHaraW");
 
                 var tree = Xb.Net.SmbTree.GetTree(
                     "192.168.254.11"
