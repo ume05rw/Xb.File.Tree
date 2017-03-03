@@ -172,10 +172,10 @@ namespace Xb.Net
 
 
         public static async Task<bool> Exists(string serverName
-            , string path
-            , string userName = null
-            , string password = null
-            , string domain = null)
+                                            , string path
+                                            , string userName = null
+                                            , string password = null
+                                            , string domain = null)
         {
             return await Task.Run(() =>
             {

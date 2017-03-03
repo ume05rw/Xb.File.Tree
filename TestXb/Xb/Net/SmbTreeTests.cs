@@ -854,14 +854,14 @@ namespace TestXb
                 var tree1 = Xb.Net.SmbTree.GetTree(
                     "192.168.254.11"
                     , "Others/Photo/ビビアン・スー - Angel.zip"
-                    , "root"
-                    , "igaHaraW");
+                    , "XXX"
+                    , "XXX");
 
                 var tree = Xb.Net.SmbTree.GetTree(
                     "192.168.254.11"
                     , "Others/Photo/風景#壁紙"
-                    , "root"
-                    , "igaHaraW");
+                    , "XXX"
+                    , "XXX");
             }
             catch (Exception ex)
             {
