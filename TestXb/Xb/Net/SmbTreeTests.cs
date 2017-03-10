@@ -38,8 +38,8 @@ namespace TestXb
         [TestMethod()]
         public void NoAuthtest()
         {
-            var tree = Xb.Net.SmbTree.GetTree("192.168.254.11"
-                , "FreeArea/nonAuthDataTest");
+            var tree = Xb.Net.SmbTree.GetTree(this._server
+                                            , "FreeArea/nonAuthDataTest");
             Assert.AreEqual(5, tree.Nodes.Length);
 
 
@@ -852,16 +852,16 @@ namespace TestXb
             try
             {
                 var tree1 = Xb.Net.SmbTree.GetTree(
-                    "192.168.254.11"
+                    this._server
                     , "Others/Photo/ビビアン・スー - Angel.zip"
-                    , "XXX"
-                    , "XXX");
+                    , this._user
+                    , this._password);
 
                 var tree = Xb.Net.SmbTree.GetTree(
-                    "192.168.254.11"
-                    , "Others/Photo/風景#壁紙"
-                    , "XXX"
-                    , "XXX");
+                    this._server
+                    , "Others/Photo"
+                    , this._user
+                    , this._password);
             }
             catch (Exception ex)
             {

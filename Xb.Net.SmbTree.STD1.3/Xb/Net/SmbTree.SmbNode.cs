@@ -193,9 +193,9 @@ namespace Xb.Net
                 }
                 catch (IOException ex)
                 {
-                    Xb.Util.Out(ex);
+                    //Xb.Util.Out(ex);
                     Xb.Util.Out($"Xb.Net.SmbTree.FileNode.Scan: Scan failure, may be not permitted [{this.FullPath}]");
-                    return;
+                    throw ex;
                 }
 
                 //4.If not exists child-node on real systems, dispose child-node 
@@ -234,7 +234,7 @@ namespace Xb.Net
                 {
                     //ルートノードのファイル/ディレクトリが差し替えされたとき
                     if(this.IsRootNode)
-                        throw new FileNotFoundException("Xb.Net.SmbTree.FileNode.Scan: Lost root node");
+                        throw new FileNotFoundException("Xb.Net.SmbTree.SmbNode.Scan: Lost root node");
 
 
                     //1)ファイルノードのはずが同名のディレクトリを検知した、
@@ -255,7 +255,7 @@ namespace Xb.Net
                                         TreeBase.FormatPath(this.CombinePath(parentNode.FullPath, newThis.Name)));
                     newThis.Scan();
 
-                    throw new IOException("Xb.Net.SmbTree.FileNode.Scan: Node entity type changed");
+                    throw new IOException("Xb.Net.SmbTree.SmbNode.Scan: Node entity type changed");
                 }
 
                 else if (!nodeExists)
@@ -263,7 +263,7 @@ namespace Xb.Net
                     //自身を示すパスが実システム上に存在しない
                     //自身を破棄して終了
                     this.Dispose();
-                    throw new IOException("Xb.Net.SmbTree.FileNode.Scan: Node entity deleted");
+                    throw new IOException("Xb.Net.SmbTree.SmbNode.Scan: Node entity deleted");
                 }
             }
 
@@ -280,7 +280,7 @@ namespace Xb.Net
                 //1.Validate you need
                 //  バリデーション(必要ならば)
                 if (this.Type != NodeType.Directory)
-                    throw new InvalidOperationException("Xb.Net.ZipTree.ZipNode.CreateChild: not directory");
+                    throw new InvalidOperationException("Xb.Net.SmbTree.SmbNode.CreateChild: not directory");
 
                 //2.Generate elements corresponding to nodes for real systems
                 //  file on file-system, node on zip-archive, or so
@@ -296,7 +296,7 @@ namespace Xb.Net
                 var newSmbFile = new SmbFile(tree.GetUriString(childFullPath));
 
                 if(newSmbFile.Exists())
-                    throw new ArgumentException($"Xb.Net.ZipTree.ZipNode.CreateChild: Exists child [{name}]");
+                    throw new ArgumentException($"Xb.Net.SmbTree.SmbNode.CreateChild: Exists child [{name}]");
 
                 try
                 {
@@ -350,7 +350,7 @@ namespace Xb.Net
                     this.SmbFile.Delete();
 
                 if (this.SmbFile.Exists())
-                    throw new IOException($"Xb.Net.ZipTree.ZipNode.Delete: Delete failure");
+                    throw new IOException($"Xb.Net.SmbTree.SmbNode.Delete: Delete failure");
 
                 //3.Call this.`Dispose` method
                 //  自身の`Dispose`メソッドを実行する。
@@ -368,7 +368,7 @@ namespace Xb.Net
                 this.ValidateMyself();
 
                 if (this.Type != NodeType.File)
-                    throw new InvalidOperationException("Xb.Net.ZipTree.ZipNodeGetBytes: Not file");
+                    throw new InvalidOperationException("Xb.Net.SmbTree.SmbNode.GetBytes: Not file");
 
                 var stream = this.SmbFile.GetInputStream();
                 var result = Xb.Byte.GetBytes(stream);
@@ -390,7 +390,7 @@ namespace Xb.Net
                 this.ValidateMyself();
 
                 if (this.Type != NodeType.File)
-                    throw new InvalidOperationException("Xb.Net.ZipTree.ZipNodeGetBytes: Not file");
+                    throw new InvalidOperationException("Xb.Net.SmbTree.SmbNode.GetBytes: Not file");
 
                 var memStream = new MemoryStream();
                 using (var stream = this.SmbFile.GetInputStream())
@@ -417,7 +417,7 @@ namespace Xb.Net
                 this.ValidateMyself();
 
                 if (this.Type != NodeType.File)
-                    throw new InvalidOperationException("Xb.File.ZipTree.ZipNode.GetReadStream: Not file");
+                    throw new InvalidOperationException("Xb.Net.SmbTree.SmbNode.GetReadStream: Not file");
 
                 return this.SmbFile.GetInputStream();
             }
@@ -433,7 +433,7 @@ namespace Xb.Net
                 this.ValidateMyself();
 
                 if (this.Type != NodeType.File)
-                    throw new InvalidOperationException("Xb.Net.ZipTree.ZipNodeGetBytes: Not file");
+                    throw new InvalidOperationException("Xb.Net.SmbTree.SmbNode.WriteBytes: Not file");
 
                 using (var stream = this.SmbFile.GetOutputStream())
                 {
