@@ -29,8 +29,8 @@ namespace Xb.File
         /// </summary>
         /// <param name="zipFileName"></param>
         protected ZipTree(string zipFileName
-                        , bool readOnly = true
-                        , Encoding encoding = null)
+            , bool readOnly = true
+            , Encoding encoding = null)
         {
             this.Encoding = encoding ?? Encoding.UTF8;
             this.ReadOnly = readOnly;
@@ -77,7 +77,7 @@ namespace Xb.File
             this.BuildTree();
         }
 
-
+        
         /// <summary>
         /// Constructor - for readonly stream
         /// コンストラクタ
@@ -89,25 +89,37 @@ namespace Xb.File
         {
             this.Encoding = encoding ?? Encoding.UTF8;
             this.ReadOnly = true;
-
             this.Stream = readableStream;
 
             try
             {
-                this.Archive = new ZipArchive(readableStream
-                                            , ZipArchiveMode.Read
-                                            , false
-                                            , this.Encoding);
+                //引数が少ない方が、平均的に2,3秒早かった。
+                if (encoding == null)
+                    this.Archive = new ZipArchive(readableStream);
+                else
+                    this.Archive = new ZipArchive(readableStream
+                                                , ZipArchiveMode.Read
+                                                , false
+                                                , this.Encoding);
             }
             catch (Exception ex)
             {
                 //ダメだった場合は一旦全データを吸い出す。
-                var bytes = Xb.Byte.GetBytes(readableStream);
-                this.Stream = new MemoryStream(bytes);
-                this.Archive = new ZipArchive(readableStream
-                                            , ZipArchiveMode.Read
-                                            , false
-                                            , this.Encoding);
+                //一旦byte配列に吸い出すので、しぬほど遅い
+                //これでNGなら例外
+                try
+                {
+                    var bytes = Xb.Byte.GetBytes(readableStream);
+                    this.Stream = new MemoryStream(bytes);
+                    this.Archive = new ZipArchive(readableStream
+                                                , ZipArchiveMode.Read
+                                                , false
+                                                , this.Encoding);
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
             }
 
             this.BuildTree();
@@ -121,15 +133,21 @@ namespace Xb.File
         {
             //アーカイブルートは複数存在可能なので、仮想のルートノードを生成しておく。
             this.Init(new Xb.File.ZipTree.ZipNode(this));
-            
-            //デリミタ検出(unix系で、やたら'\'の多い長いファイル名があったらアウト
-            //遅いのは、archive オブジェクト生成後に初めて Entries にアクセスするため。
-            //全件走査の前に見付かったエントリを順次取得するような機能が無い。残念。
+
+            //デリミタ検出: (unix系で、やたら'\'の多い長いファイル名があったらアウト
             var longNameNode = this.Archive.Entries
                                            .OrderByDescending(e => e.FullName.Length)
                                            .FirstOrDefault();
+            //遅いのは、archive オブジェクト生成後に初めて Entries にアクセスするため。
+            //全件走査の前に見付かったエントリを順次取得するような機能が無い。残念。
+            //↑遅いのは、.NetFW上での体験。遅延評価？
+            //　Xamarin.iOSでは、ZipArchiveオブジェクト生成時にくっそ時間喰う
+
             if (longNameNode == null)
             {
+                //↓システム標準デリミタだが、ユーザー環境だとWindows上の
+                //↓アーカイバアプリ使用者が多そうなので、バックスラッシュにする。
+                //this.Delimiter = System.IO.Path.DirectorySeparatorChar;
                 this.Delimiter = '\\';
             }
             else
@@ -143,8 +161,11 @@ namespace Xb.File
             //ツリー構造を作る
             //子要素が存在するディレクトリ単体のエントリは存在しない。
             //よって、パスの先頭からディレクトリノードを順次生成する必要がある。
-            foreach (var entry in this.Archive.Entries)
+            //foreach (var entry in this.Archive.Entries)
+            var count = this.Archive.Entries.Count;
+            for (var i = 0; i < count; i++)
             {
+                var entry = this.Archive.Entries[i];
                 var fullPath = TreeBase.FormatPath(entry.FullName);
 
                 var path = "";

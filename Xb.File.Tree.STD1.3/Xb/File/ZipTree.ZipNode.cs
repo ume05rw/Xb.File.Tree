@@ -180,16 +180,17 @@ namespace Xb.File
                 if (this.Entry == null)
                     throw new InvalidOperationException("Xb.File.ZipTree.ZipNode.GetBytes: Entry not found");
 
-                var memStream = new MemoryStream();
+                byte[] bytes;
                 using (var stream = this.Entry.Open())
                 {
-                    var buffer = new byte[Xb.Byte.BufferSize];
-                    int size;
-                    while ((size = stream.Read(buffer, 0, buffer.Length)) > 0)
-                        memStream.Write(buffer, 0, size);
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        stream.CopyTo(ms);
+                        bytes = ms.ToArray();
+                    }
                 }
 
-                return memStream.ToArray();
+                return bytes;
             }
 
 
