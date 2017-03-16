@@ -247,7 +247,7 @@ namespace Xb.File.Tree
 
 
         /// <summary>
-        /// Scan & refresh nodes
+        /// Scan, refresh nodes
         /// 子ノードを走査する
         /// </summary>
         public virtual void Scan()
@@ -269,7 +269,7 @@ namespace Xb.File.Tree
 
 
         /// <summary>
-        /// Scan & refresh nodes recursive on async
+        /// Scan, refresh nodes recursive on async
         /// 子ノードを再帰的に走査する
         /// </summary>
         /// <returns></returns>
@@ -519,7 +519,7 @@ namespace Xb.File.Tree
 
 
         /// <summary>
-        /// Append new-node to child-list & tree
+        /// Append new-node to child-list, tree
         /// 新規ノードを、子リストとTreeインスタンスに追加する
         /// </summary>
         /// <param name="node"></param>

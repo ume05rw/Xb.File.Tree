@@ -88,13 +88,13 @@ namespace Xb.File.Tree
 
 
         /// <summary>
-        /// Scan & refresh nodes
+        /// Scan refresh nodes
         /// 子ノードを走査する
         /// </summary>
         void Scan();
 
         /// <summary>
-        /// Scan & refresh nodes recursive on async
+        /// Scan refresh nodes recursive on async
         /// 子ノードを再帰的に走査する
         /// </summary>
         /// <returns></returns>

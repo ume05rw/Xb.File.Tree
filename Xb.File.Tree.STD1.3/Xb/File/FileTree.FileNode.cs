@@ -45,7 +45,7 @@ namespace Xb.File
 
 
             /// <summary>
-            /// Scan & refresh nodes
+            /// Scan, refresh nodes
             /// 子ノードを走査する
             /// </summary>
             public override void Scan()
