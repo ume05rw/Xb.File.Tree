@@ -423,7 +423,7 @@ namespace TextXb
             Assert.IsFalse(Directory.Exists(baseDir));
 
             var structure = this.BuildDirectoryTree();
-            var tree = await Xb.File.FileTree.GetTreeRecursiveAsync(baseDir);
+            var tree = await Xb.File.FileTree.GetTreeRecursiveAsync(baseDir).ConfigureAwait(false);
 
             this.OutHighlighted(tree.Paths);
 
@@ -474,7 +474,7 @@ namespace TextXb
 
             //get all recursive
             var structure = this.BuildDirectoryTree();
-            var tree = await Xb.File.FileTree.GetTreeRecursiveAsync(baseDir);
+            var tree = await Xb.File.FileTree.GetTreeRecursiveAsync(baseDir).ConfigureAwait(false);
 
             this.OutHighlighted(tree.Paths);
 

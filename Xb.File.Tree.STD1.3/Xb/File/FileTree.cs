@@ -47,8 +47,9 @@ namespace Xb.File
             await Task.Run(() =>
             {
                 tree = Xb.File.FileTree.GetTree(path);
-            });
-            await tree.ScanRecursiveAsync();
+            }).ConfigureAwait(false);
+
+            await tree.ScanRecursiveAsync().ConfigureAwait(false);
 
             return tree;
         }

@@ -298,12 +298,12 @@ namespace Xb.File.Tree
                 {
                     throw;
                 }
-            });
+            }).ConfigureAwait(false);
 
             //配下のディレクトリをループ
             foreach (var node in me.Children.Where(node => node.Type == NodeType.Directory))
             {
-                await node.ScanRecursiveAsync();
+                await node.ScanRecursiveAsync().ConfigureAwait(false);
             }
         }
 
@@ -430,7 +430,7 @@ namespace Xb.File.Tree
         /// <returns></returns>
         public virtual async Task<byte[]> GetBytesAsync()
         {
-            return await Task.Run(() => this.GetBytes());
+            return await Task.Run(() => this.GetBytes()).ConfigureAwait(false);
         }
 
 
@@ -458,7 +458,7 @@ namespace Xb.File.Tree
         /// <remarks>file size max 2GB</remarks>
         public virtual async Task<byte[]> GetBytesAsync(long offset, int length)
         {
-            return await Task.Run(() => this.GetBytes(offset, length));
+            return await Task.Run(() => this.GetBytes(offset, length)).ConfigureAwait(false);
         }
 
 
@@ -491,7 +491,7 @@ namespace Xb.File.Tree
         /// <param name="bytes"></param>
         public virtual async Task WriteBytesAsync(byte[] bytes)
         {
-            await Task.Run(() => this.WriteBytes(bytes));
+            await Task.Run(() => this.WriteBytes(bytes)).ConfigureAwait(false);
         }
 
 

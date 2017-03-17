@@ -194,7 +194,7 @@ namespace Xb.File.Tree
         /// <returns></returns>
         public async Task ScanRecursiveAsync()
         {
-            await this.RootNode.ScanRecursiveAsync();
+            await this.RootNode.ScanRecursiveAsync().ConfigureAwait(false);
         }
 
 

@@ -164,13 +164,24 @@ namespace Xb.Net
                                             , userName
                                             , password
                                             , domain);
-            });
-            await tree.ScanRecursiveAsync();
+            }).ConfigureAwait(false);
+
+            await tree.ScanRecursiveAsync().ConfigureAwait(false);
 
             return tree;
         }
 
 
+        /// <summary>
+        /// Validate passing path
+        /// 指定パスの存在を検証する。
+        /// </summary>
+        /// <param name="serverName"></param>
+        /// <param name="path"></param>
+        /// <param name="userName"></param>
+        /// <param name="password"></param>
+        /// <param name="domain"></param>
+        /// <returns></returns>
         public static async Task<bool> Exists(string serverName
                                             , string path
                                             , string userName = null
@@ -194,7 +205,7 @@ namespace Xb.Net
                 {
                     return false;
                 }
-            });
+            }).ConfigureAwait(false);
         }
 
 
@@ -218,7 +229,9 @@ namespace Xb.Net
                                                             : name)
                                         .Where(name => name != "IPC$")
                                         .ToArray();
+
                     var result = new List<Share>();
+
                     foreach (var share in shares)
                         result.Add(new Share(serverAddress, share));
 
@@ -228,10 +241,13 @@ namespace Xb.Net
                 {
                     return new Share[] {};
                 }
-            });
+            }).ConfigureAwait(false);
         }
 
 
+        /// <summary>
+        /// Smb-shared server, folder info
+        /// </summary>
         public class Share
         {
             /// <summary>
@@ -252,12 +268,12 @@ namespace Xb.Net
         }
 
         /// <summary>
-        /// Get server & shared-folders on lan
+        /// Get server, shared-folders on lan
         /// </summary>
         /// <returns></returns>
         public static async Task<Share[]> GetSharesAsync()
         {
-            var servers = await Xb.Net.SmbTree.GetServersAsync();
+            var servers = await Xb.Net.SmbTree.GetServersAsync().ConfigureAwait(false);
 
             return await Task.Run(() =>
             {
@@ -265,6 +281,7 @@ namespace Xb.Net
                 foreach (var server in servers)
                 {
                     var smb = new SmbFile($"smb://{server}");
+
                     if (smb.Exists())
                     {
                         try
@@ -276,6 +293,7 @@ namespace Xb.Net
                                                                 : name)
                                             .Where(name => name != "IPC$")
                                             .ToArray();
+
                             foreach (var share in shares)
                                 result.Add(new Share(server, share));
                         }
@@ -286,7 +304,7 @@ namespace Xb.Net
                 }
 
                 return result.ToArray();
-            });
+            }).ConfigureAwait(false);
         }
 
 
@@ -296,7 +314,7 @@ namespace Xb.Net
         /// <returns></returns>
         public static async Task<string[]> GetServersAsync()
         {
-            return await ServerScanner.GetServersAsync();
+            return await ServerScanner.GetServersAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -305,7 +323,7 @@ namespace Xb.Net
         /// <returns></returns>
         public static async Task<string[]> GetServersAsync(IPAddress address)
         {
-            return await ServerScanner.GetServersAsync(address);
+            return await ServerScanner.GetServersAsync(address).ConfigureAwait(false);
         }
 
         public class ServerScanner
@@ -313,13 +331,13 @@ namespace Xb.Net
             public static async Task<string[]> GetServersAsync()
             {
                 var instance = new ServerScanner();
-                return await instance.Exec();
+                return await instance.Exec().ConfigureAwait(false);
             }
 
             public static async Task<string[]> GetServersAsync(IPAddress address)
             {
                 var instance = new ServerScanner(address);
-                return await instance.Exec();
+                return await instance.Exec().ConfigureAwait(false);
             }
 
             public static int ParallelSocketCount { get; set; } = 20;
@@ -353,7 +371,8 @@ namespace Xb.Net
                 {
                     if (this._addresses == null)
                     {
-                        this._addresses = Task.Run(() => System.Net.Dns.GetHostAddressesAsync(System.Net.Dns.GetHostName()))
+                        this._addresses = Task.Run(() => Dns.GetHostAddressesAsync(Dns.GetHostName()))
+                                              .ConfigureAwait(false)
                                               .GetAwaiter()
                                               .GetResult()
                                               .Where(addr => addr.AddressFamily == AddressFamily.InterNetwork)
@@ -391,9 +410,6 @@ namespace Xb.Net
                     var limitTime = DateTime.Now.AddSeconds(StoreResponseTimeoutSecond);
                     while (this._tryAddress.Count < (this._addresses.Length * 253))
                     {
-                        //Xb.Util.Out($"tryAddress.Count: {this._tryAddress.Count}");
-                        //Xb.Util.Out($"existAddrs.Count: {this._existAddrs.Count}");
-
                         if (limitTime < DateTime.Now)
                             break;
 
@@ -411,7 +427,7 @@ namespace Xb.Net
                     }
 
                     return result.ToArray();
-                });
+                }).ConfigureAwait(false);
             }
 
 
@@ -430,12 +446,7 @@ namespace Xb.Net
                     if (this._sockets[socketIndex] != null)
                     {
                         //Xb.Util.Out($"TryConnect-Retry: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex}");
-                        Task.Run(() =>
-                        {
-                            Thread.Sleep(NoResponseTimeoutMilliSecond + 50);
-                            //this.TryConnect(byte1, byte2, byte3, byte4);
-                        })
-                        .ContinueWith(t =>
+                        Task.Delay(NoResponseTimeoutMilliSecond + 50).ContinueWith(t =>
                         {
                             this.TryConnect(byte1, byte2, byte3, byte4);
                         });
