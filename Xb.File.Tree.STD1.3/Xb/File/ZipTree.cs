@@ -29,8 +29,8 @@ namespace Xb.File
         /// </summary>
         /// <param name="zipFileName"></param>
         protected ZipTree(string zipFileName
-            , bool readOnly = true
-            , Encoding encoding = null)
+                        , bool readOnly = true
+                        , Encoding encoding = null)
         {
             this.Encoding = encoding ?? Encoding.UTF8;
             this.ReadOnly = readOnly;
@@ -222,7 +222,7 @@ namespace Xb.File
 
         
         /// <summary>
-        /// Returns Tree-object with the passing zip-file as the root
+        /// Returns ITree-object of ZipArchive with the passing zip-file as the root
         /// zipファイルをルートにした、Treeオブジェクトを返す
         /// </summary>
         /// <param name="zipFileName"></param>
@@ -239,7 +239,7 @@ namespace Xb.File
 
 
         /// <summary>
-        /// Returns readonly Tree-object with the passing zip-file as the root
+        /// Returns *READONLY* ITree-object of ZipArchive with the passing zip-file as the root
         /// zipファイルをルートにした、読み取り専用Treeオブジェクトを返す
         /// </summary>
         /// <param name="readableStream"></param>

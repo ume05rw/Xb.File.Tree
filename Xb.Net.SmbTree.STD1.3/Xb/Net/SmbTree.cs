@@ -113,7 +113,7 @@ namespace Xb.Net
 
 
         /// <summary>
-        /// Get Tree-object with the passing path as the root
+        /// Get ITree-object of SMB/Cifs-File-System with the passing path as the root
         /// 指定パスをルートにした、Treeオブジェクトを返す
         /// </summary>
         /// <param name="serverName"></param>
@@ -139,7 +139,7 @@ namespace Xb.Net
 
 
         /// <summary>
-        /// Get Tree object that scans all nodes under the passing path (VERY HEAVY!)
+        /// Get ITree-object of SMB/Cifs-File-System that scans all nodes under the passing path (VERY HEAVY!)
         /// 指定パス配下の全ノードをスキャンしたTreeオブジェクトを返す。重い！
         /// </summary>
         /// <param name="serverName"></param>
@@ -268,7 +268,7 @@ namespace Xb.Net
         }
 
         /// <summary>
-        /// Get server, shared-folders on lan
+        /// Get server, shared-folders on LAN
         /// </summary>
         /// <returns></returns>
         public static async Task<Share[]> GetSharesAsync()
@@ -309,7 +309,7 @@ namespace Xb.Net
 
 
         /// <summary>
-        /// Get smb-servers on lan
+        /// Get SMB-servers on LAN
         /// </summary>
         /// <returns></returns>
         public static async Task<string[]> GetServersAsync()
@@ -318,7 +318,7 @@ namespace Xb.Net
         }
 
         /// <summary>
-        /// Get smb-servers on lan
+        /// Get SMB-servers on passing LAN
         /// </summary>
         /// <returns></returns>
         public static async Task<string[]> GetServersAsync(IPAddress address)

@@ -21,7 +21,7 @@ namespace Xb.File
 
 
         /// <summary>
-        /// Returns Tree-object with the passing path as the root
+        /// Returns ITree-object of Local File-System with the passing path as the root
         /// 指定パスをルートにした、Treeオブジェクトを返す
         /// </summary>
         /// <param name="path"></param>
@@ -35,7 +35,7 @@ namespace Xb.File
 
 
         /// <summary>
-        /// Returns a Tree object that scans all nodes under the passing path (VERY HEAVY!)
+        /// Returns ITree object of Local File-System that scans all nodes under the passing path (VERY HEAVY!)
         /// 指定パス配下の全ノードをスキャンしたTreeオブジェクトを返す。重い！
         /// </summary>
         /// <param name="path"></param>

@@ -88,7 +88,7 @@ namespace Xb.File.Tree
 
 
         /// <summary>
-        /// Scan refresh nodes
+        /// Scan child-nodes
         /// 子ノードを走査する
         /// </summary>
         void Scan();
@@ -101,7 +101,7 @@ namespace Xb.File.Tree
         Task ScanRecursiveAsync();
 
         /// <summary>
-        /// Get serializable-object of tree structure
+        /// Get serializable-object of tree structure(ex: JSON-Converting)
         /// 配下のツリー構造をシリアライズ可能なオブジェクトとして取得する
         /// </summary>
         /// <returns></returns>
@@ -109,7 +109,7 @@ namespace Xb.File.Tree
 
 
         /// <summary>
-        /// Get all-children recursive
+        /// Get INode-Array of all-children, exec recursive
         /// 配下の全ノードを再帰的に取得する
         /// </summary>
         /// <returns></returns>
@@ -140,14 +140,7 @@ namespace Xb.File.Tree
         byte[] GetBytes();
 
         /// <summary>
-        /// Get byte-array of node on async
-        /// ノードのデータをバイト配列で取得する
-        /// </summary>
-        /// <returns></returns>
-        Task<byte[]> GetBytesAsync();
-
-        /// <summary>
-        /// Get byte-array of node
+        /// Get byte-array of node, sliced by passing values
         /// ノードのデータをバイト配列で取得する
         /// </summary>
         /// <param name="offset"></param>
@@ -157,6 +150,13 @@ namespace Xb.File.Tree
 
         /// <summary>
         /// Get byte-array of node on async
+        /// ノードのデータをバイト配列で取得する
+        /// </summary>
+        /// <returns></returns>
+        Task<byte[]> GetBytesAsync();
+
+        /// <summary>
+        /// Get byte-array of node on async, sliced by passing values
         /// ノードのデータをバイト配列で取得する
         /// </summary>
         /// <param name="offset"></param>
