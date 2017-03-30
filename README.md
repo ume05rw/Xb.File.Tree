@@ -25,7 +25,7 @@ Xb.Net.SmbTree:
 
 ## Usage
 1. Add NuGet Package [Xb.File.Tree](https://www.nuget.org/packages/Xb.File.Tree/), [Xb.Net.SmbTree](https://www.nuget.org/packages/Xb.Net.SmbTree/) to your project.
-2. Create Instance of Subclass, and do any()
+2. Exec Tree's Static Method to Get ITree-object, and do any()
 
 Namespace and Methods are...
 
