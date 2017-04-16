@@ -340,15 +340,11 @@ namespace Xb.Net
                 return await instance.Exec().ConfigureAwait(false);
             }
 
-            public static int ParallelSocketCount { get; set; } = 20;
-            public static int NoResponseTimeoutMilliSecond { get; set; } = 200;
-            public static int StoreResponseTimeoutSecond { get; set; } = 40;
-            public static int WaitParOneScanMilliSecond { get; set; } = 100;
+            public static int ScanTimeoutMilliSecond { get; set; } = 10000;
+            public static int ConnectTimeoutMilliSecound { get; set; } = 3000;
+            public static int MaxSocketCount { get; set; } = 100;
 
-            private List<IPAddress> _tryAddress;
-            private List<IPAddress> _existAddress;
             private IPAddress[] _addresses = null;
-            private Socket[] _sockets;
 
 
             private ServerScanner()
@@ -382,9 +378,7 @@ namespace Xb.Net
                     if (this._addresses.Length <= 0)
                         return new string[] { };
                     
-                    this._tryAddress = new List<IPAddress>();
-                    this._existAddress = new List<IPAddress>();
-                    this._sockets = new Socket[ParallelSocketCount];
+                    var detectors = new List<Detector>();
 
                     foreach (var address in this._addresses)
                     {
@@ -395,30 +389,33 @@ namespace Xb.Net
                         for (var i = 1; i < 255; i++)
                         {
                             addrBytes[3] = (byte)i;
+                            var target = new IPAddress(addrBytes);
 
-                            //445ポートへの接続試行を実行する。
-                            //呼び出し先メソッド内の処理が全て別スレッドで動作するため、
-                            //スキャンが平行する。
-                            //配列をまるごと渡すと参照渡しになってしまうため、分割してbyte型を渡す。
-                            this.TryConnect(addrBytes[0], addrBytes[1], addrBytes[2], addrBytes[3]);
+                            while (detectors.Count(d => !d.Completed) >= MaxSocketCount)
+                                Task.Delay(500).ConfigureAwait(false).GetAwaiter().GetResult();
 
-                            //大量にスレッドを生成すると、イベントの割り込みが遅くなるらしい。
-                            Thread.Sleep(WaitParOneScanMilliSecond);
+                            detectors.Add(new Detector(target));
                         }
                     }
 
-                    var limitTime = DateTime.Now.AddSeconds(StoreResponseTimeoutSecond);
-                    while (this._tryAddress.Count < (this._addresses.Length * 253))
+                    var limitTime = DateTime.Now.AddSeconds(ScanTimeoutMilliSecond);
+                    while (detectors.Count(d => d.Completed) < (this._addresses.Length * 253))
                     {
                         if (limitTime < DateTime.Now)
                             break;
 
-                        Thread.Sleep(50);
+                        Task.Delay(500).ConfigureAwait(false).GetAwaiter().GetResult();
                     }
 
+                    var existAddress = detectors.Where(d => d.Exists)
+                                                .Select(d => d.IpAddress)
+                                                .ToList();
+
+                    foreach (var detector in detectors)
+                        detector.Dispose();
 
                     var result = new List<string>();
-                    foreach (var addr in this._existAddress)
+                    foreach (var addr in existAddress)
                     {
                         var server = string.Join(".", addr.GetAddressBytes().Select(b => ((int)b).ToString()));
                         var smb = new SmbFile($"smb://{server}");
@@ -429,76 +426,61 @@ namespace Xb.Net
                     return result.ToArray();
                 }).ConfigureAwait(false);
             }
+            
 
-
-            //値渡しのため、バイト配列を分割して受け取る。
-            private void TryConnect(byte byte1, byte byte2, byte byte3, byte byte4)
+            private class Detector : IDisposable
             {
-                Task.Run(() =>
+                private Socket _socket;
+                public IPAddress IpAddress { get; private set; }
+                private DateTime _startTime;
+
+                public bool Exists { get; private set; } = false;
+                public bool Completed { get; private set; } = false;
+
+                public Detector(IPAddress address)
                 {
-                    var index = (int)byte4;
-                    var socketIndex = index % this._sockets.Length;
-                    var addrBytes = new byte[] { byte1, byte2, byte3, byte4 };
-
-                    DateTime startTime = DateTime.MinValue;
-
-                    //別スレッドでソケット使用中のとき、時間を置いてリトライ
-                    if (this._sockets[socketIndex] != null)
-                    {
-                        //Xb.Util.Out($"TryConnect-Retry: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex}");
-                        Task.Delay(NoResponseTimeoutMilliSecond + 50).ContinueWith(t =>
-                        {
-                            this.TryConnect(byte1, byte2, byte3, byte4);
-                        });
-                        return;
-                    }
-
-                    this._sockets[socketIndex] = new Socket((new IPAddress(addrBytes)).AddressFamily
-                                                          , SocketType.Stream
-                                                          , ProtocolType.Tcp);
-
-                    //Xb.Util.Out($"TryConnect-Exec: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex}");
-
-                    var ipAddress = new IPAddress(addrBytes);
-                    this._tryAddress.Add(ipAddress);
-
-                    var connected = false;
+                    //Xb.Util.Out($"Detector.Constructor");
+                    this.IpAddress = address;
+                    this._socket = new Socket(address.AddressFamily
+                                            , SocketType.Stream
+                                            , ProtocolType.Tcp);
 
                     var ev = new SocketAsyncEventArgs
                     {
-                        RemoteEndPoint = new System.Net.IPEndPoint(ipAddress, 445)
+                        RemoteEndPoint = new System.Net.IPEndPoint(this.IpAddress, 445)
                     };
                     ev.Completed += (sender, e) =>
                     {
-                        connected = true;
+                        this.Completed = true;
+
+                        //Xb.Util.Out($"Detector - Completed: Error = {e.SocketError}");
                         if (e.SocketError == SocketError.Success)
                         {
-                            Xb.Util.Out($"TryConnect-Found: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex} / {startTime.ToString("HH:mm:ss.fff")}");
-                            this._existAddress.Add(ipAddress);
+                            this.Exists = true;
+                            var span = (DateTime.Now - this._startTime);
+                            Xb.Util.Out($"Detector - Found: {this.IpAddress.ToString()} / {span.TotalSeconds.ToString("f3")} sec");
                         }
+                        this._socket.Dispose();
                     };
 
-                    startTime = DateTime.Now;
-                    this._sockets[socketIndex].ConnectAsync(ev);
+                    this._startTime = DateTime.Now;
+                    //Xb.Util.Out($"Detector - Start: {this.IpAddress.ToString()}");
+                    this._socket.ConnectAsync(ev);
 
-                    Task.Run(() =>
+                    Task.Delay(ConnectTimeoutMilliSecound).ContinueWith(t =>
                     {
-                        //NoResponseTimeoutMilliSec(ミリ秒)以内に応答がないとき、存在しないアドレスとする。
-                        var limitTime = DateTime.Now.AddMilliseconds(NoResponseTimeoutMilliSecond);
-                        while (!connected)
-                        {
-                            if (limitTime < DateTime.Now)
-                                break;
+                        //Xb.Util.Out($"Detector - Timeout");
+                        this.Completed = true;
+                        this._socket.Dispose();
+                    }).ConfigureAwait(false);
+                }
 
-                            Thread.Sleep(NoResponseTimeoutMilliSecond / 10);
-                        }
-
-                        this._sockets[socketIndex].Dispose();
-                        this._sockets[socketIndex] = null;
-                        //if (!connected) Xb.Util.Out($"TryConnect-Failed: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex} / {startTime.ToString("HH:mm:ss.fff")}");
-                        //Xb.Util.Out($"TryConnect-End: {(int)byte1}.{(int)byte2}.{(int)byte3}.{(int)byte4} / socketIndex = {socketIndex} / {(connected ? "Success" : "Fail") }");
-                    });
-                });
+                public void Dispose()
+                {
+                    this._socket?.Dispose();
+                    this._socket = null;
+                    this.IpAddress = null;
+                }
             }
         }
     }
