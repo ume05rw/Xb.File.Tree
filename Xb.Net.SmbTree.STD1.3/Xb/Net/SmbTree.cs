@@ -460,7 +460,9 @@ namespace Xb.Net
                             var span = (DateTime.Now - this._startTime);
                             Xb.Util.Out($"Detector - Found: {this.IpAddress.ToString()} / {span.TotalSeconds.ToString("f3")} sec");
                         }
-                        this._socket.Dispose();
+
+                        this._socket?.Dispose();
+                        this._socket = null;
                     };
 
                     this._startTime = DateTime.Now;
@@ -471,7 +473,9 @@ namespace Xb.Net
                     {
                         //Xb.Util.Out($"Detector - Timeout");
                         this.Completed = true;
-                        this._socket.Dispose();
+
+                        this._socket?.Dispose();
+                        this._socket = null;
                     }).ConfigureAwait(false);
                 }
 
@@ -479,6 +483,7 @@ namespace Xb.Net
                 {
                     this._socket?.Dispose();
                     this._socket = null;
+
                     this.IpAddress = null;
                 }
             }
