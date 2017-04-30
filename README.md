@@ -9,7 +9,7 @@ It's File-System Libraries, Get a File-System as a Tree-Structure Objects, and O
 Xb.File.Tree: for Local File-System, and Zip-Archive Files.(includes Tree-Structure Defenitions.)  
 Xb.Net.SmbTree: for files on SMB/Cifs Networks.
 
-Supports .NET4.5.1, .NET Standard1.3
+Supports .NET4.6, .NET Standard1.3
 
 ## Requirement
 Xb.File.Tree:  
