@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SharpCifs.Smb;
+using SharpCifs.Netbios;
 
 namespace Xb.Net
 {
@@ -211,37 +212,28 @@ namespace Xb.Net
 
 
         /// <summary>
-        /// Get shared-folder names on server
+        /// Smb Server info class
         /// </summary>
-        /// <param name="serverAddress"></param>
-        /// <returns></returns>
-        public static async Task<Share[]> GetSharesAsync(string serverAddress)
+        public class Server
         {
-            return await Task.Run(() =>
+            /// <summary>
+            /// HostName
+            /// </summary>
+            public string Name { get; internal set; } = string.Empty;
+
+            /// <summary>
+            /// IpAddress
+            /// </summary>
+            public IPAddress Address { get; internal set; } = null;
+
+            /// <summary>
+            /// Owned Shared Folders
+            /// </summary>
+            public Share[] Shares { get; internal set; } = new Share[] { };
+
+            internal Server()
             {
-                try
-                {
-                    var shares = (new SmbFile($"smb://{serverAddress}"))
-                                        .ListFiles()
-                                        .Select(node => node.GetName())
-                                        .Select(name => name.EndsWith("/") 
-                                                            ? name.Substring(0, name.Length - 1) 
-                                                            : name)
-                                        .Where(name => name != "IPC$")
-                                        .ToArray();
-
-                    var result = new List<Share>();
-
-                    foreach (var share in shares)
-                        result.Add(new Share(serverAddress, share));
-
-                    return result.ToArray();
-                }
-                catch (Exception)
-                {
-                    return new Share[] {};
-                }
-            }).ConfigureAwait(false);
+            }
         }
 
 
@@ -251,26 +243,194 @@ namespace Xb.Net
         public class Share
         {
             /// <summary>
-            /// Server address
+            /// Server IPAddress string
             /// </summary>
-            public string Server { get; }
+            public string Server { get; internal set; } = string.Empty;
+
+            /// <summary>
+            /// Server HostName
+            /// </summary>
+            public string HostName { get; internal set; } = string.Empty;
+
+            /// <summary>
+            /// Server IPAddress
+            /// </summary>
+            public IPAddress Address { get; internal set; } = null;
 
             /// <summary>
             /// Share name
             /// </summary>
             public string Name { get; }
 
-            public Share(string server, string name)
+            internal Share(string name)
             {
-                this.Server = server;
                 this.Name = name;
             }
         }
 
+
+        
+
+
+
         /// <summary>
         /// Get server, shared-folders on LAN
         /// </summary>
+        /// <param name="serverName"></param>
         /// <returns></returns>
+        public static async Task<Server[]> ScanSharesAsync(string serverName = null)
+        {
+            return await Task.Run(() => 
+            {
+                var result = new List<Server>();
+
+                SharpCifs.Config.SetProperty("jcifs.smb.client.lport", "8137");
+                if (string.IsNullOrEmpty(serverName))
+                {
+                    var lan = new SmbFile("smb://", "");
+
+                    foreach (var workgroup in lan.ListFiles())
+                    {
+                        try
+                        {
+                            foreach (var server in workgroup.ListFiles())
+                            {
+                                var hostName = server.GetName().TrimEnd('/').ToUpper();
+                                var item = new Server()
+                                {
+                                    Name = hostName,
+                                    Address = null
+                                };
+
+                                try
+                                {
+                                    var naddr = NbtAddress.GetByName(server.GetName().TrimEnd('/'));
+                                    item.Name = naddr.GetHostName();
+                                    item.Address = naddr.GetInetAddress();
+                                }
+                                catch (Exception)
+                                {
+                                }
+                                result.Add(item);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            //workgroup access denied.
+                        }
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        var item = new Server()
+                        {
+                            Name = serverName.ToUpper(),
+                            Address = null
+                        };
+
+                        try
+                        {
+                            var naddr = NbtAddress.GetByName(item.Name);
+                            item.Name = naddr.GetHostName();
+                            item.Address = naddr.GetInetAddress();
+                        }
+                        catch (Exception)
+                        {
+                        }
+                        
+                        result.Add(item);
+                    }
+                    catch (Exception)
+                    {
+                        //not found specified server
+                    }
+                }
+
+                //if the server cannot be found, returns a null array.
+                if (result.Count <= 0)
+                    return result.ToArray();
+
+                foreach (var server in result)
+                {
+                    try
+                    {
+                        var target = server.Address?.ToString() ?? server.Name;
+                        var smbServer = new SmbFile($"smb://{target}/");
+                        server.Shares = smbServer.ListFiles()
+                                                 .Select(s => s.GetName().TrimEnd('/'))
+                                                 .Where(n => n.IndexOf('$') < 0)
+                                                 .Select(n => new Share(n)
+                                                    {
+                                                       Server = server.Name,
+                                                       HostName = server.Name,
+                                                       Address = server.Address
+                                                    })
+                                                 .ToArray();
+                    }
+                    catch (Exception)
+                    {
+                        //server access denied.
+                    }
+                }
+
+                return result.ToArray();
+            });
+        }
+
+
+        /// <summary>
+        /// Get shared-folder names on server (deprecated: duplicate implementation)
+        /// </summary>
+        /// <param name="serverAddress"></param>
+        /// <returns></returns>
+        public static async Task<Share[]> GetSharesAsync(string serverAddress)
+        {
+            return await Task.Run(() =>
+            {
+                try
+                {
+                    SharpCifs.Config.SetProperty("jcifs.smb.client.lport", "8137");
+
+                    var shareNamess = (new SmbFile($"smb://{serverAddress}"))
+                                            .ListFiles()
+                                            .Select(node => node.GetName())
+                                            .Select(name => name.EndsWith("/")
+                                                                ? name.Substring(0, name.Length - 1)
+                                                                : name)
+                                            .Where(name => name != "IPC$")
+                                            .ToArray();
+
+                    var result = new List<Share>();
+
+                    foreach (var shareName in shareNamess)
+                    {
+                        result.Add(new Share(shareName)
+                        {
+                            Server = serverAddress,
+                            Address = null,
+                            HostName = null
+                        });
+                    }
+
+                    return result.ToArray();
+                }
+                catch (Exception)
+                {
+                    return new Share[] { };
+                }
+            }).ConfigureAwait(false);
+        }
+
+
+        /// <summary>
+        /// Get server, shared-folders on LAN (deprecated: inefficient operation.)
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>
+        /// Please switch to ScanSharesAsync.
+        /// </remarks>
         public static async Task<Share[]> GetSharesAsync()
         {
             var servers = await Xb.Net.SmbTree.GetServersAsync().ConfigureAwait(false);
@@ -286,7 +446,7 @@ namespace Xb.Net
                     {
                         try
                         {
-                            var shares = smb.ListFiles()
+                            var shareNamess = smb.ListFiles()
                                             .Select(node => node.GetName())
                                             .Select(name => name.EndsWith("/") 
                                                                 ? name.Substring(0, name.Length - 1) 
@@ -294,8 +454,14 @@ namespace Xb.Net
                                             .Where(name => name != "IPC$")
                                             .ToArray();
 
-                            foreach (var share in shares)
-                                result.Add(new Share(server, share));
+                            foreach (var shareName in shareNamess)
+                            {
+                                var share = new Share(shareName);
+                                share.Server = server;
+                                share.Address = IPAddress.Parse(server);
+                                result.Add(share);
+                            }
+
                         }
                         catch (Exception)
                         {
@@ -309,23 +475,35 @@ namespace Xb.Net
 
 
         /// <summary>
-        /// Get SMB-servers on LAN
+        /// Get SMB-servers on LAN (deprecated: inefficient operation.)
         /// </summary>
         /// <returns></returns>
+        /// <remarks>
+        /// Please switch to ScanServerAsync.
+        /// </remarks>
         public static async Task<string[]> GetServersAsync()
         {
             return await ServerScanner.GetServersAsync().ConfigureAwait(false);
         }
 
         /// <summary>
-        /// Get SMB-servers on passing LAN
+        /// Get SMB-servers on passing LAN (deprecated: high-load operation.)
         /// </summary>
         /// <returns></returns>
+        /// <remarks>
+        /// Please switch to ScanServerAsync.
+        /// </remarks>
         public static async Task<string[]> GetServersAsync(IPAddress address)
         {
             return await ServerScanner.GetServersAsync(address).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Socket Based Smb-Server Scanner Class (deprecated: high-load operation.)
+        /// </summary>
+        /// <remarks>
+        /// Please switch to ScanServerAsync.
+        /// </remarks>
         public class ServerScanner
         {
             public static async Task<string[]> GetServersAsync()

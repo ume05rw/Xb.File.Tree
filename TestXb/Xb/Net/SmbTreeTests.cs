@@ -19,6 +19,21 @@ namespace TestXb
         private string _password = "XXXX";
 
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        public SmbTreeTests()
+        {
+            if (Secrets.HasSecrets)
+            {
+                this._server = Secrets.Get("ServerIp");
+                this._user = Secrets.Get("UserName");
+                this._password = Secrets.Get("Password");
+            }
+        }
+
+
+
         private Xb.Net.SmbTree GetTree(string path)
         {
             return Xb.Net.SmbTree.GetTree(this._server
@@ -39,8 +54,8 @@ namespace TestXb
         public void NoAuthtest()
         {
             var tree = Xb.Net.SmbTree.GetTree(this._server
-                                            , "FreeArea/nonAuthDataTest");
-            Assert.AreEqual(5, tree.Nodes.Length);
+                                            , "FreeArea/SharpCifsTest");
+            Assert.AreEqual(4, tree.Nodes.Length);
 
 
         }
@@ -829,21 +844,73 @@ namespace TestXb
         public async Task TreeGetSharesAsyncTest()
         {
             var shares = await Xb.Net.SmbTree.GetSharesAsync(this._server);
-            this.Out(Xb.Type.Json.Stringify(shares, true));
+
+            foreach (var share in shares)
+            {
+                this.Out($"{share.Server}/{share.Name}");
+            }
+
+            var stop = 1;
         }
 
         [TestMethod()]
         public async Task TreeGetSharesAsyncTest2()
         {
+            this.Out($"Start!");
             var shares = await Xb.Net.SmbTree.GetSharesAsync();
-            this.Out(Xb.Type.Json.Stringify(shares, true));
+
+            foreach (var share in shares)
+            {
+                this.Out($"{share.Server}/{share.Name}");
+            }
+
+            var stop = 1;
         }
+
+        [TestMethod()]
+        public async Task TreeScanSharesAsyncTest()
+        {
+            this.Out($"Start!");
+            var servers = await Xb.Net.SmbTree.ScanSharesAsync();
+            foreach (var server in servers)
+            {
+                this.Out($"{server.Name}");
+                foreach (var share in server.Shares)
+                {
+                    this.Out($"    {share.Name}");
+                }
+            }
+
+            var stop = 1;
+        }
+
+
+        [TestMethod()]
+        public async Task TreeScanSharesAsyncTest2()
+        {
+            this.Out($"Start!");
+            var servers = await Xb.Net.SmbTree.ScanSharesAsync("XXXXX");
+            foreach (var server in servers)
+            {
+                this.Out($"{server.Name}");
+                foreach (var share in server.Shares)
+                {
+                    this.Out($"    {share.Name}");
+                }
+            }
+
+            var stop = 1;
+        }
+
 
         [TestMethod()]
         public async Task TreeGetServersAsyncTest()
         {
+            this.Out($"Start!");
             var shares = await Xb.Net.SmbTree.GetServersAsync();
             this.Out(Xb.Type.Json.Stringify(shares, true));
+
+            var stop = 1;
         }
 
         [TestMethod()]

@@ -3,8 +3,8 @@
   "dependencies": {
     "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
     "NETStandard.Library": "1.6.0",
-    "SharpCifs.Std": "0.1.8-beta1",
-    "Xb.Core": "1.0.12"
+    "SharpCifs.Std": "0.2.5",
+    "Xb.Core": "1.0.13"
   },
   "frameworks": {
     "netstandard1.3": {}
