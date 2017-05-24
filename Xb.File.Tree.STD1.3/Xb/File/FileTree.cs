@@ -19,17 +19,20 @@ namespace Xb.File
             this.Init(rootNode);
         }
 
-
         /// <summary>
         /// Returns ITree-object of Local File-System with the passing path as the root
         /// 指定パスをルートにした、Treeオブジェクトを返す
         /// </summary>
         /// <param name="path"></param>
+        /// <param name="isRootOnly"></param>
         /// <returns></returns>
-        public new static Xb.File.FileTree GetTree(string path)
+        public new static Xb.File.FileTree GetTree(string path, bool isRootOnly = false)
         {
             var result = new Xb.File.FileTree(path);
-            result.RootNode.Scan();
+
+            if (!isRootOnly)
+                result.RootNode.Scan();
+
             return result;
         }
 

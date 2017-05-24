@@ -233,8 +233,10 @@ namespace Xb.File
                                                              , bool readOnly = true
                                                              , Encoding encoding = null)
         {
-            var result = new Xb.File.ZipTree(zipFileName, readOnly, encoding);
-            return result;
+            return await Task.Run(() => 
+            {
+                return new Xb.File.ZipTree(zipFileName, readOnly, encoding);
+            }).ConfigureAwait(false);
         }
 
 
@@ -248,8 +250,10 @@ namespace Xb.File
         public static async Task<Xb.File.ZipTree> GetTreeAsync(Stream readableStream
                                                              , Encoding encoding = null)
         {
-            var result = new Xb.File.ZipTree(readableStream, encoding);
-            return result;
+            return await Task.Run(() => 
+            {
+                return new Xb.File.ZipTree(readableStream, encoding);
+            }).ConfigureAwait(false);
         }
 
 

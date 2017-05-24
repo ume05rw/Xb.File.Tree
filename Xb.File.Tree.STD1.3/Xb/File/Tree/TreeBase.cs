@@ -203,8 +203,9 @@ namespace Xb.File.Tree
         /// 指定パスをルートにした、Treeオブジェクトを返す
         /// </summary>
         /// <param name="path"></param>
+        /// <param name="isRootOnly"></param>
         /// <returns></returns>
-        protected static Xb.File.Tree.ITree GetTree(string path)
+        protected static Xb.File.Tree.ITree GetTree(string path, bool isRootOnly = false)
         {
             throw new NotImplementedException("Xb.File.Tree.TreeBase.GetTree: Execute only subclass");
         }

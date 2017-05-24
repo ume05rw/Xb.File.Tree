@@ -66,7 +66,7 @@ namespace Xb.Net
         }
 
 
-        protected static string GetUriString(string serverName
+        private static string GetUriString(string serverName
                                            , string path
                                            , string userName = null
                                            , string password = null
@@ -107,7 +107,7 @@ namespace Xb.Net
         }
 
 
-        protected internal string GetNodePath(string path)
+        internal string GetNodePath(string path)
         {
             return path.Substring(this.PathStartIndex);
         }
@@ -122,19 +122,24 @@ namespace Xb.Net
         /// <param name="userName"></param>
         /// <param name="password"></param>
         /// <param name="domain"></param>
+        /// <param name="isRootOnly"></param>
         /// <returns></returns>
         public static Xb.Net.SmbTree GetTree(string serverName
                                            , string path
                                            , string userName = null
                                            , string password = null
-                                           , string domain = null)
+                                           , string domain = null
+                                           , bool isRootOnly = false)
         {
             var result = new Xb.Net.SmbTree(serverName
                                           , path
                                           , userName
                                           , password
                                           , domain);
-            result.RootNode.Scan();
+
+            if (!isRootOnly)
+                result.RootNode.Scan();
+
             return result;
         }
 
@@ -151,25 +156,26 @@ namespace Xb.Net
         /// <returns></returns>
         public static async Task<Xb.Net.SmbTree> GetTreeRecursiveAsync(
             string serverName
-            , string path
-            , string userName = null
-            , string password = null
-            , string domain = null)
+          , string path
+          , string userName = null
+          , string password = null
+          , string domain = null)
         {
-            Xb.Net.SmbTree tree = null;
-
-            await Task.Run(() =>
+            return await Task.Run(() =>
             {
-                tree = Xb.Net.SmbTree.GetTree(serverName
-                                            , path
-                                            , userName
-                                            , password
-                                            , domain);
+                var tree = Xb.Net.SmbTree.GetTree(serverName
+                                                , path
+                                                , userName
+                                                , password
+                                                , domain);
+
+                tree.ScanRecursiveAsync().ConfigureAwait(false)
+                                         .GetAwaiter()
+                                         .GetResult();
+
+                return tree;
+
             }).ConfigureAwait(false);
-
-            await tree.ScanRecursiveAsync().ConfigureAwait(false);
-
-            return tree;
         }
 
 
