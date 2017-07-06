@@ -311,7 +311,7 @@ namespace Xb.Net
 
                             break;
                         default:
-                            throw new ArgumentOutOfRangeException(nameof(type), $"Xb.Net.ZipTree.ZipNode.CreateChild: Unknown type [{type}]");
+                            throw new ArgumentOutOfRangeException(nameof(type), $"Xb.Net.SmbTree.SmbNode.CreateChild: Unknown type [{type}]");
                     }
                 }
                 catch (Exception ex)
